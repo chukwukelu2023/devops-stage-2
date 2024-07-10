@@ -58,7 +58,7 @@ services:
     container_name: npm_app
     ports:
       - "80:80"
-      - "81:81"
+      - "8089:81"
       - "443:443"
     environment:
       DB_MYSQL_HOST: "npm_db"
