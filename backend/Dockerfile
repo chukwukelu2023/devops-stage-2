@@ -1,37 +1,33 @@
-
-# Use an official Python runtime as a parent image
 FROM python:3.10-slim
 
-#install bash
-# RUN apk add --no-cache bash
-
-# Set the working directory
+# Set working directory
 WORKDIR /appuser
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    bash \
+    dos2unix \
+    && rm -rf /var/lib/apt/lists/*
 
 # Install Poetry
 RUN pip install poetry
 
-# COPY . .
-# Copy the pyproject.toml and poetry.lock files
+# Copy dependency files
 COPY pyproject.toml poetry.lock /appuser/
 
-# Install dependencies
-RUN poetry install  --no-dev
+# Install dependencies (without dev dependencies)
+RUN poetry install --no-root --only main
 
-# Copy the rest of the application code
+# Copy the rest of the code
 COPY . /appuser
 
+# Ensure prestart.sh uses Unix line endings & is executable
+RUN dos2unix ./prestart.sh && chmod +x ./prestart.sh
 
-# Expose port 8000
-EXPOSE 8000
-# Convert line endings of prestart.sh to Unix format
-RUN apt-get update && apt-get install -y dos2unix \
-    && dos2unix ./prestart.sh \
-    && chmod +x ./prestart.sh
-
-# Run the database initialization script
+# Environment variables
 ENV PYTHONPATH=/appuser
 
-# Command to run the FastAPI server
+# Expose FastAPI port
+EXPOSE 8000
 
 CMD ["bash", "-c", "poetry run bash ./prestart.sh && poetry run uvicorn app.main:app --host 0.0.0.0 --port 8000"]
